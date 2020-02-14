@@ -14,12 +14,17 @@ class Observable<S extends Api, T> {
   StreamTransformer<S, T> _transformer;
   final S api;
   Deliver deliver;
+  Function() _onSubscribe;
+  Function() _onCompleted;
 
   Observable({this.api, this.deliver}) {
     _transformer =
-        StreamTransformer<S, T>.fromHandlers(handleData: (value, sink) {
+    StreamTransformer<S, T>.fromHandlers(handleData: (value, sink) {
       Request(
           api: value,
+          onStart: (api) {
+            _onSubscribe();
+          },
           onSuccess: (response) {
             deliver.applySuccess<T>(sink, response);
           },
@@ -31,6 +36,9 @@ class Observable<S extends Api, T> {
           },
           onCatchError: (error) {
             deliver.applyCatchError<T>(sink, error);
+          },
+          onCompleted: (api) {
+            _onCompleted();
           });
     });
   }
@@ -39,10 +47,11 @@ class Observable<S extends Api, T> {
     streamController.stream.transform(transformer);
   }
 
-  void subscribe(
-      {void Function(T data) onData,
-      void Function(dynamic error) onError,
-      void Function(Observable observable) onDone}) {
+  void subscribe({void Function(T data) onData,
+    void Function(dynamic error) onError,
+    void Function(Observable observable) onDone,
+    void Function() onSubscribe,
+    void Function() onCompleted}) {
     if (_transformer == null) {
       Net.logFormat('_transformer cannot be empty');
       return;
@@ -50,6 +59,8 @@ class Observable<S extends Api, T> {
     if (deliver == null) {
       deliver = ApiDeliver();
     }
+    _onSubscribe = onSubscribe;
+    _onCompleted = onCompleted;
     streamController.stream
         .transform(_transformer)
         .listen(onData, onError: onError, onDone: () => onDone(this));
