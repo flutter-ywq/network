@@ -26,19 +26,20 @@ class Observable<S extends Api, T> {
             _onSubscribe();
           },
           onSuccess: (response) {
+            _onCompleted();
             deliver.applySuccess<T>(sink, response);
           },
           onFail: (response) {
+            _onCompleted();
             deliver.applyFail<T>(sink, response);
           },
           onError: (error) {
+            _onCompleted();
             deliver.applyError<T>(sink, error);
           },
           onCatchError: (error) {
-            deliver.applyCatchError<T>(sink, error);
-          },
-          onCompleted: (api) {
             _onCompleted();
+            deliver.applyCatchError<T>(sink, error);
           });
     });
   }
