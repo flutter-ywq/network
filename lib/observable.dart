@@ -18,30 +18,37 @@ class Observable<S extends Api, T> {
   Function() _onCompleted;
 
   Observable({this.api, this.deliver}) {
-    _transformer =
-        StreamTransformer<S, T>.fromHandlers(handleData: (value, sink) {
+    _transformer = StreamTransformer<S, T>.fromHandlers(handleData: (value, sink) {
       Request(
           api: value,
           onStart: (api) {
-            _onSubscribe();
+            if (_onSubscribe != null) {
+              _onSubscribe();
+            }
           },
           onSuccess: (response) {
-            _onCompleted();
+            _callOnCompleted();
             deliver.applySuccess<T>(sink, response);
           },
           onFail: (response) {
-            _onCompleted();
+            _callOnCompleted();
             deliver.applyFail<T>(sink, response);
           },
           onError: (error) {
-            _onCompleted();
+            _callOnCompleted();
             deliver.applyError<T>(sink, error);
           },
           onCatchError: (error) {
-            _onCompleted();
+            _callOnCompleted();
             deliver.applyCatchError<T>(sink, error);
           });
     });
+  }
+
+  void _callOnCompleted() {
+    if (_onCompleted != null) {
+      _onCompleted();
+    }
   }
 
   void compose(StreamTransformer<S, T> transformer) {
@@ -62,9 +69,7 @@ class Observable<S extends Api, T> {
     }
     _onSubscribe = onSubscribe;
     _onCompleted = onCompleted;
-    streamController.stream
-        .transform(_transformer)
-        .listen(onData, onError: onError, onDone: () => dispose());
+    streamController.stream.transform(_transformer).listen(onData, onError: onError, onDone: () => dispose());
     streamController.add(api);
   }
 
