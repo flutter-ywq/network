@@ -8,7 +8,7 @@ flutter network
 ``` dart
 
   network:
-    git: http://[account]:[pwd]@gitlab.centaline.com.cn/3th-market-bms/aplus-app/store/flutter/network.git
+    git: https://github.com/flutter-ywq/network.git
     
 ```
 
